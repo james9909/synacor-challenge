@@ -3,11 +3,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::Read;
 
-mod error;
-mod instruction;
-mod opcode;
-mod operand;
-mod vm;
+use synacor::vm::Vm;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
@@ -27,7 +23,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .into_iter()
         .map(|b| u16::from_ne_bytes([b[0], b[1]]))
         .collect();
-    let mut vm = vm::Vm::new(&mut code);
+    let mut vm = Vm::new(&mut code);
 
     if let Err(e) = vm.run() {
         println!("Program crashed: {}", e);
