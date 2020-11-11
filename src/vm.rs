@@ -127,6 +127,16 @@ impl<'a> Vm<'a> {
                 self.parse_operand()?,
                 self.parse_operand()?,
             ),
+            Opcode::Mult => Instruction::Mult(
+                self.expect_register()?,
+                self.parse_operand()?,
+                self.parse_operand()?,
+            ),
+            Opcode::Mod => Instruction::Mod(
+                self.expect_register()?,
+                self.parse_operand()?,
+                self.parse_operand()?,
+            ),
             Opcode::And => Instruction::And(
                 self.expect_register()?,
                 self.parse_operand()?,

@@ -16,6 +16,8 @@ pub enum Instruction {
     Jt(Operand, Operand),
     Jf(Operand, Operand),
     Add(Register, Operand, Operand),
+    Mult(Register, Operand, Operand),
+    Mod(Register, Operand, Operand),
     And(Register, Operand, Operand),
     Or(Register, Operand, Operand),
     Not(Register, Operand),
@@ -66,8 +68,18 @@ impl Instruction {
                 }
             }
             Self::Add(dest, a, b) => {
-                let sum = state.read_value(a) + state.read_value(b) % MODULO;
+                let sum = (state.read_value(a) + state.read_value(b)) % MODULO;
                 state.set_register(*dest, sum);
+            }
+            Self::Mult(dest, a, b) => {
+                let sum =
+                    (state.read_value(a) as usize * state.read_value(b) as usize) % MODULO as usize;
+                state.set_register(*dest, sum as Literal);
+            }
+            Self::Mod(dest, a, b) => {
+                let a = state.read_value(a);
+                let b = state.read_value(b);
+                state.set_register(*dest, a % b);
             }
             Self::And(dest, a, b) => {
                 let and = state.read_value(a) & state.read_value(b);
