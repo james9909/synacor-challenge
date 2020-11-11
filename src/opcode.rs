@@ -5,6 +5,8 @@ use std::convert::TryFrom;
 pub enum Opcode {
     Halt,
     Set,
+    Push,
+    Pop,
     Eq,
     Jmp,
     Jt,
@@ -21,6 +23,8 @@ impl TryFrom<u16> for Opcode {
         match value {
             0 => Ok(Self::Halt),
             1 => Ok(Self::Set),
+            2 => Ok(Self::Push),
+            3 => Ok(Self::Pop),
             4 => Ok(Self::Eq),
             6 => Ok(Self::Jmp),
             7 => Ok(Self::Jt),

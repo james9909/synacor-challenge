@@ -10,4 +10,6 @@ pub enum VmError {
     InvalidOperand(u16),
     #[error("unexpected operand {0:?}")]
     UnexpectedOperand(Operand),
+    #[error("stack underflow")]
+    StackUnderflow,
 }

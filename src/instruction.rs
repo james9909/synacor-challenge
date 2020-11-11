@@ -1,3 +1,4 @@
+use crate::error::VmError;
 use crate::operand::{Literal, Operand, Register};
 use crate::vm::VmState;
 
@@ -7,6 +8,8 @@ const MODULO: Literal = 32768;
 pub enum Instruction {
     Halt,
     Set(Register, Operand),
+    Push(Operand),
+    Pop(Register),
     Eq(Register, Operand, Operand),
     Jmp(Operand),
     Jt(Operand, Operand),
@@ -17,22 +20,26 @@ pub enum Instruction {
 }
 
 impl Instruction {
-    pub fn execute(&self, state: &mut VmState) -> bool {
+    pub fn execute(&self, state: &mut VmState) -> Result<bool, VmError> {
         match self {
-            Self::Halt => false,
+            Self::Halt => return Ok(false),
             Self::Set(dest, source) => {
                 state.set_register(*dest, state.read_value(source));
-                true
+            }
+            Self::Push(a) => {
+                state.push(state.read_value(a));
+            }
+            Self::Pop(a) => {
+                let v = state.pop()?;
+                state.set_register(*a, v);
             }
             Self::Eq(dest, a, b) => {
                 let a = state.read_value(a);
                 let b = state.read_value(b);
                 state.set_register(*dest, (a == b) as u16);
-                true
             }
             Self::Jmp(dest) => {
                 state.pc = state.read_value(dest);
-                true
             }
             Self::Jt(a, b) => {
                 let a = state.read_value(a);
@@ -40,7 +47,6 @@ impl Instruction {
                 if a != 0u16 {
                     state.pc = b;
                 }
-                true
             }
             Self::Jf(a, b) => {
                 let a = state.read_value(a);
@@ -48,19 +54,17 @@ impl Instruction {
                 if a == 0u16 {
                     state.pc = b;
                 }
-                true
             }
             Self::Add(dest, a, b) => {
                 let sum = state.read_value(a) + state.read_value(b) % MODULO;
                 state.set_register(*dest, sum);
-                true
             }
             Self::Out(op) => {
                 let chr = state.read_value(op) as u8;
                 print!("{}", chr as char);
-                true
             }
-            Self::NoOp => true,
-        }
+            Self::NoOp => {}
+        };
+        Ok(true)
     }
 }

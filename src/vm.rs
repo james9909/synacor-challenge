@@ -24,6 +24,14 @@ impl VmState {
     pub fn set_register(&mut self, register: Register, value: Literal) {
         self.registers[register as usize] = value
     }
+
+    pub fn push(&mut self, value: Literal) {
+        self.stack.push(value);
+    }
+
+    pub fn pop(&mut self) -> Result<Literal, VmError> {
+        self.stack.pop().ok_or(VmError::StackUnderflow)
+    }
 }
 
 pub struct Vm<'a> {
@@ -45,13 +53,13 @@ impl<'a> Vm<'a> {
         }
     }
 
-    pub fn step(&mut self) {
+    pub fn step(&mut self) -> Result<(), VmError> {
         if !self.running {
-            return;
+            return Ok(());
         }
         match self.read_instruction() {
             Ok(i) => {
-                self.running = i.execute(&mut self.state);
+                self.running = i.execute(&mut self.state)?;
             }
             Err(e) => {
                 println!("Failed to read instruction: {}", e);
@@ -61,12 +69,14 @@ impl<'a> Vm<'a> {
         if self.state.pc as usize >= self.code.len() {
             self.running = false;
         }
+        Ok(())
     }
 
-    pub fn run(&mut self) {
+    pub fn run(&mut self) -> Result<(), VmError> {
         while self.running {
-            self.step()
+            self.step()?
         }
+        Ok(())
     }
 
     fn read_u16(&mut self) -> u16 {
@@ -97,6 +107,8 @@ impl<'a> Vm<'a> {
         let instruction = match Opcode::try_from(self.read_u16())? {
             Opcode::Halt => Instruction::Halt,
             Opcode::Set => Instruction::Set(self.expect_register()?, self.parse_operand()?),
+            Opcode::Push => Instruction::Push(self.parse_operand()?),
+            Opcode::Pop => Instruction::Pop(self.expect_register()?),
             Opcode::Eq => Instruction::Eq(
                 self.expect_register()?,
                 self.parse_operand()?,

@@ -29,6 +29,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         .collect();
     let mut vm = vm::Vm::new(&code);
 
-    vm.run();
+    if let Err(e) = vm.run() {
+        println!("Program crashed: {}", e);
+    }
     Ok(())
 }
