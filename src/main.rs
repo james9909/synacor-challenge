@@ -22,12 +22,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     f.read_to_end(&mut buffer)?;
 
     // Convert the program so we're operating only on u16 values
-    let code: Vec<u16> = buffer
+    let mut code: Vec<u16> = buffer
         .chunks_exact(2)
         .into_iter()
         .map(|b| u16::from_ne_bytes([b[0], b[1]]))
         .collect();
-    let mut vm = vm::Vm::new(&code);
+    let mut vm = vm::Vm::new(&mut code);
 
     if let Err(e) = vm.run() {
         println!("Program crashed: {}", e);

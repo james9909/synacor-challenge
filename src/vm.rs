@@ -8,12 +8,28 @@ use std::convert::TryFrom;
 const NUM_REGISTERS: usize = 8;
 
 pub struct VmState {
+    memory: Vec<u16>,
+    code_len: u16,
     pub(crate) pc: u16,
     pub(crate) registers: [u16; NUM_REGISTERS],
     pub(crate) stack: Vec<u16>,
 }
 
 impl VmState {
+    fn read_u16(&mut self) -> u16 {
+        let val = self.memory[self.pc as usize];
+        self.pc += 1;
+        val
+    }
+
+    pub fn read(&self, address: u16) -> u16 {
+        self.memory[address as usize]
+    }
+
+    pub fn write(&mut self, address: u16, value: u16) {
+        self.memory[address as usize] = value;
+    }
+
     pub fn read_value(&self, operand: &Operand) -> Literal {
         match operand {
             Operand::Literal(l) => *l,
@@ -25,6 +41,10 @@ impl VmState {
         self.registers[register as usize] = value
     }
 
+    pub fn get_register(&self, register: Register) -> Literal {
+        self.registers[register as usize]
+    }
+
     pub fn push(&mut self, value: Literal) {
         self.stack.push(value);
     }
@@ -34,19 +54,21 @@ impl VmState {
     }
 }
 
-pub struct Vm<'a> {
-    code: &'a [u16],
+pub struct Vm {
     running: bool,
     state: VmState,
 }
 
-impl<'a> Vm<'a> {
-    pub fn new(code: &'a [u16]) -> Vm<'a> {
+impl Vm {
+    pub fn new(code: &[u16]) -> Vm {
+        let mut memory = Vec::from(code);
+        memory.resize(2usize.pow(15), 0);
         Vm {
-            code,
             running: true,
             state: VmState {
+                memory,
                 pc: 0,
+                code_len: code.len() as u16,
                 registers: [0; 8],
                 stack: Vec::new(),
             },
@@ -66,7 +88,7 @@ impl<'a> Vm<'a> {
                 self.running = false;
             }
         };
-        if self.state.pc as usize >= self.code.len() {
+        if self.state.pc >= self.state.code_len {
             self.running = false;
         }
         Ok(())
@@ -79,14 +101,8 @@ impl<'a> Vm<'a> {
         Ok(())
     }
 
-    fn read_u16(&mut self) -> u16 {
-        let val = self.code[self.state.pc as usize];
-        self.state.pc += 1;
-        val
-    }
-
     fn parse_operand(&mut self) -> Result<Operand, VmError> {
-        Operand::try_from(self.read_u16())
+        Operand::try_from(self.state.read_u16())
     }
 
     fn expect_literal(&mut self) -> Result<Literal, VmError> {
@@ -104,7 +120,7 @@ impl<'a> Vm<'a> {
     }
 
     fn read_instruction(&mut self) -> Result<Instruction, VmError> {
-        let instruction = match Opcode::try_from(self.read_u16())? {
+        let instruction = match Opcode::try_from(self.state.read_u16())? {
             Opcode::Halt => Instruction::Halt,
             Opcode::Set => Instruction::Set(self.expect_register()?, self.parse_operand()?),
             Opcode::Push => Instruction::Push(self.parse_operand()?),
@@ -148,6 +164,8 @@ impl<'a> Vm<'a> {
                 self.parse_operand()?,
             ),
             Opcode::Not => Instruction::Not(self.expect_register()?, self.parse_operand()?),
+            Opcode::Rmem => Instruction::Rmem(self.parse_operand()?, self.parse_operand()?),
+            Opcode::Wmem => Instruction::Wmem(self.parse_operand()?, self.parse_operand()?),
             Opcode::Call => Instruction::Call(self.parse_operand()?),
             Opcode::Out => Instruction::Out(self.parse_operand()?),
             Opcode::NoOp => Instruction::NoOp,

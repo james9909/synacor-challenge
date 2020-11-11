@@ -21,6 +21,8 @@ pub enum Instruction {
     And(Register, Operand, Operand),
     Or(Register, Operand, Operand),
     Not(Register, Operand),
+    Rmem(Operand, Operand),
+    Wmem(Operand, Operand),
     Call(Operand),
     Out(Operand),
     NoOp,
@@ -93,6 +95,22 @@ impl Instruction {
                 let a = state.read_value(a);
                 // Only flip the last 15 bits using the mask 0b111111111111111
                 state.set_register(*dest, a ^ 0x7fff);
+            }
+            Self::Rmem(a, b) => {
+                let b = state.read(state.read_value(b));
+                match a {
+                    Operand::Literal(v) => {
+                        state.write(*v, b);
+                    }
+                    Operand::Register(r) => {
+                        state.set_register(*r, b);
+                    }
+                }
+            }
+            Self::Wmem(a, b) => {
+                let a = state.read_value(a);
+                let b = state.read_value(b);
+                state.write(a, b);
             }
             Self::Call(a) => {
                 state.push(state.pc);
