@@ -21,6 +21,7 @@ pub enum Opcode {
     Rmem,
     Wmem,
     Call,
+    Ret,
     Out,
     NoOp,
 }
@@ -48,6 +49,7 @@ impl TryFrom<u16> for Opcode {
             15 => Ok(Self::Rmem),
             16 => Ok(Self::Wmem),
             17 => Ok(Self::Call),
+            18 => Ok(Self::Ret),
             19 => Ok(Self::Out),
             21 => Ok(Self::NoOp),
             _ => Err(VmError::InvalidOpcode(value)),

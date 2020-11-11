@@ -24,6 +24,7 @@ pub enum Instruction {
     Rmem(Operand, Operand),
     Wmem(Operand, Operand),
     Call(Operand),
+    Ret,
     Out(Operand),
     NoOp,
 }
@@ -116,6 +117,12 @@ impl Instruction {
                 state.push(state.pc);
                 state.pc = state.read_value(a);
             }
+            Self::Ret => match state.pop() {
+                Ok(addr) => {
+                    state.pc = addr;
+                }
+                Err(_) => return Ok(false),
+            },
             Self::Out(op) => {
                 let chr = state.read_value(op) as u8;
                 print!("{}", chr as char);

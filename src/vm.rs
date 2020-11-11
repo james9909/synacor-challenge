@@ -167,6 +167,7 @@ impl Vm {
             Opcode::Rmem => Instruction::Rmem(self.parse_operand()?, self.parse_operand()?),
             Opcode::Wmem => Instruction::Wmem(self.parse_operand()?, self.parse_operand()?),
             Opcode::Call => Instruction::Call(self.parse_operand()?),
+            Opcode::Ret => Instruction::Ret,
             Opcode::Out => Instruction::Out(self.parse_operand()?),
             Opcode::NoOp => Instruction::NoOp,
         };
