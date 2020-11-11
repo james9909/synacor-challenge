@@ -22,8 +22,7 @@ impl Instruction {
                 true
             }
             Self::Jmp(destination) => {
-                // Multiply by 2 because values are 16 bits
-                state.pc = *destination * 2;
+                state.pc = *destination;
                 true
             }
             Self::NoOp => true,

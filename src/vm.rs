@@ -14,13 +14,13 @@ pub struct VmState {
 }
 
 pub struct Vm<'a> {
-    code: &'a [u8],
+    code: &'a [u16],
     running: bool,
     state: VmState,
 }
 
 impl<'a> Vm<'a> {
-    pub fn new(code: &'a [u8]) -> Vm<'a> {
+    pub fn new(code: &'a [u16]) -> Vm<'a> {
         Vm {
             code,
             running: true,
@@ -56,14 +56,10 @@ impl<'a> Vm<'a> {
         }
     }
 
-    fn read_u8(&mut self) -> u8 {
+    fn read_u16(&mut self) -> u16 {
         let val = self.code[self.state.pc as usize];
         self.state.pc += 1;
         val
-    }
-
-    fn read_u16(&mut self) -> u16 {
-        (self.read_u8() as u16) | ((self.read_u8() as u16) << 8)
     }
 
     fn parse_operand(&mut self) -> Result<Operand, VmError> {
@@ -94,7 +90,7 @@ mod tests {
 
     #[test]
     fn test_halt() {
-        let program = [0, 0];
+        let program = [0];
         let mut vm = Vm::new(&program);
         vm.step();
         assert!(!vm.running);
