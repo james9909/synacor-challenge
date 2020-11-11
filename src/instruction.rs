@@ -19,6 +19,7 @@ pub enum Instruction {
     And(Register, Operand, Operand),
     Or(Register, Operand, Operand),
     Not(Register, Operand),
+    Call(Operand),
     Out(Operand),
     NoOp,
 }
@@ -80,6 +81,10 @@ impl Instruction {
                 let a = state.read_value(a);
                 // Only flip the last 15 bits using the mask 0b111111111111111
                 state.set_register(*dest, a ^ 0x7fff);
+            }
+            Self::Call(a) => {
+                state.push(state.pc);
+                state.pc = state.read_value(a);
             }
             Self::Out(op) => {
                 let chr = state.read_value(op) as u8;

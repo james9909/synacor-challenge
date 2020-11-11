@@ -16,6 +16,7 @@ pub enum Opcode {
     And,
     Or,
     Not,
+    Call,
     Out,
     NoOp,
 }
@@ -38,6 +39,7 @@ impl TryFrom<u16> for Opcode {
             12 => Ok(Self::And),
             13 => Ok(Self::Or),
             14 => Ok(Self::Not),
+            17 => Ok(Self::Call),
             19 => Ok(Self::Out),
             21 => Ok(Self::NoOp),
             _ => Err(VmError::InvalidOpcode(value)),

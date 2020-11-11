@@ -138,6 +138,7 @@ impl<'a> Vm<'a> {
                 self.parse_operand()?,
             ),
             Opcode::Not => Instruction::Not(self.expect_register()?, self.parse_operand()?),
+            Opcode::Call => Instruction::Call(self.parse_operand()?),
             Opcode::Out => Instruction::Out(self.parse_operand()?),
             Opcode::NoOp => Instruction::NoOp,
         };
