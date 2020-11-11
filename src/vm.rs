@@ -7,9 +7,35 @@ use std::convert::TryFrom;
 
 const NUM_REGISTERS: usize = 8;
 
+struct StdinReader {
+    buf: String,
+    pos: usize,
+}
+
+impl StdinReader {
+    pub fn new() -> Self {
+        Self {
+            buf: String::new(),
+            pos: 0,
+        }
+    }
+
+    pub fn read_char(&mut self) -> Result<u8, std::io::Error> {
+        if self.pos == self.buf.len() {
+            self.buf.clear();
+            std::io::stdin().read_line(&mut self.buf)?;
+            self.pos = 0;
+        }
+        let chr = self.buf.as_bytes()[self.pos];
+        self.pos += 1;
+        Ok(chr)
+    }
+}
+
 pub struct VmState {
     memory: Vec<u16>,
     code_len: u16,
+    input_buffer: StdinReader,
     pub(crate) pc: u16,
     pub(crate) registers: [u16; NUM_REGISTERS],
     pub(crate) stack: Vec<u16>,
@@ -52,6 +78,10 @@ impl VmState {
     pub fn pop(&mut self) -> Result<Literal, VmError> {
         self.stack.pop().ok_or(VmError::StackUnderflow)
     }
+
+    pub fn read_char(&mut self) -> Result<u8, std::io::Error> {
+        self.input_buffer.read_char()
+    }
 }
 
 pub struct Vm {
@@ -67,6 +97,7 @@ impl Vm {
             running: true,
             state: VmState {
                 memory,
+                input_buffer: StdinReader::new(),
                 pc: 0,
                 code_len: code.len() as u16,
                 registers: [0; 8],
@@ -169,6 +200,7 @@ impl Vm {
             Opcode::Call => Instruction::Call(self.parse_operand()?),
             Opcode::Ret => Instruction::Ret,
             Opcode::Out => Instruction::Out(self.parse_operand()?),
+            Opcode::In => Instruction::In(self.parse_operand()?),
             Opcode::NoOp => Instruction::NoOp,
         };
         Ok(instruction)

@@ -26,6 +26,7 @@ pub enum Instruction {
     Call(Operand),
     Ret,
     Out(Operand),
+    In(Operand),
     NoOp,
 }
 
@@ -126,6 +127,17 @@ impl Instruction {
             Self::Out(op) => {
                 let chr = state.read_value(op) as u8;
                 print!("{}", chr as char);
+            }
+            Self::In(a) => {
+                let chr = state.read_char()? as u16;
+                match a {
+                    Operand::Literal(v) => {
+                        state.write(*v, chr);
+                    }
+                    Operand::Register(r) => {
+                        state.set_register(*r, chr);
+                    }
+                }
             }
             Self::NoOp => {}
         };

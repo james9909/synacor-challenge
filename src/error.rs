@@ -12,4 +12,6 @@ pub enum VmError {
     UnexpectedOperand(Operand),
     #[error("stack underflow")]
     StackUnderflow,
+    #[error("could not read from i/o")]
+    IoError(#[from] std::io::Error),
 }

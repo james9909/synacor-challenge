@@ -23,6 +23,7 @@ pub enum Opcode {
     Call,
     Ret,
     Out,
+    In,
     NoOp,
 }
 
@@ -51,6 +52,7 @@ impl TryFrom<u16> for Opcode {
             17 => Ok(Self::Call),
             18 => Ok(Self::Ret),
             19 => Ok(Self::Out),
+            20 => Ok(Self::In),
             21 => Ok(Self::NoOp),
             _ => Err(VmError::InvalidOpcode(value)),
         }
