@@ -11,10 +11,14 @@ pub enum Instruction {
     Push(Operand),
     Pop(Register),
     Eq(Register, Operand, Operand),
+    Gt(Register, Operand, Operand),
     Jmp(Operand),
     Jt(Operand, Operand),
     Jf(Operand, Operand),
     Add(Register, Operand, Operand),
+    And(Register, Operand, Operand),
+    Or(Register, Operand, Operand),
+    Not(Register, Operand),
     Out(Operand),
     NoOp,
 }
@@ -38,6 +42,11 @@ impl Instruction {
                 let b = state.read_value(b);
                 state.set_register(*dest, (a == b) as u16);
             }
+            Self::Gt(dest, a, b) => {
+                let a = state.read_value(a);
+                let b = state.read_value(b);
+                state.set_register(*dest, (a > b) as u16);
+            }
             Self::Jmp(dest) => {
                 state.pc = state.read_value(dest);
             }
@@ -58,6 +67,19 @@ impl Instruction {
             Self::Add(dest, a, b) => {
                 let sum = state.read_value(a) + state.read_value(b) % MODULO;
                 state.set_register(*dest, sum);
+            }
+            Self::And(dest, a, b) => {
+                let and = state.read_value(a) & state.read_value(b);
+                state.set_register(*dest, and);
+            }
+            Self::Or(dest, a, b) => {
+                let or = state.read_value(a) | state.read_value(b);
+                state.set_register(*dest, or);
+            }
+            Self::Not(dest, a) => {
+                let a = state.read_value(a);
+                // Only flip the last 15 bits using the mask 0b111111111111111
+                state.set_register(*dest, a ^ 0x7fff);
             }
             Self::Out(op) => {
                 let chr = state.read_value(op) as u8;

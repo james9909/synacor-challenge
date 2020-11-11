@@ -114,6 +114,11 @@ impl<'a> Vm<'a> {
                 self.parse_operand()?,
                 self.parse_operand()?,
             ),
+            Opcode::Gt => Instruction::Gt(
+                self.expect_register()?,
+                self.parse_operand()?,
+                self.parse_operand()?,
+            ),
             Opcode::Jmp => Instruction::Jmp(self.parse_operand()?),
             Opcode::Jt => Instruction::Jt(self.parse_operand()?, self.parse_operand()?),
             Opcode::Jf => Instruction::Jf(self.parse_operand()?, self.parse_operand()?),
@@ -122,6 +127,17 @@ impl<'a> Vm<'a> {
                 self.parse_operand()?,
                 self.parse_operand()?,
             ),
+            Opcode::And => Instruction::And(
+                self.expect_register()?,
+                self.parse_operand()?,
+                self.parse_operand()?,
+            ),
+            Opcode::Or => Instruction::Or(
+                self.expect_register()?,
+                self.parse_operand()?,
+                self.parse_operand()?,
+            ),
+            Opcode::Not => Instruction::Not(self.expect_register()?, self.parse_operand()?),
             Opcode::Out => Instruction::Out(self.parse_operand()?),
             Opcode::NoOp => Instruction::NoOp,
         };
