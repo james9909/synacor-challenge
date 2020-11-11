@@ -55,20 +55,20 @@ impl Instruction {
                 state.set_register(*dest, (a > b) as u16);
             }
             Self::Jmp(dest) => {
-                state.pc = state.read_value(dest);
+                state.set_pc(state.read_value(dest));
             }
             Self::Jt(a, b) => {
                 let a = state.read_value(a);
                 let b = state.read_value(b);
                 if a != 0u16 {
-                    state.pc = b;
+                    state.set_pc(b);
                 }
             }
             Self::Jf(a, b) => {
                 let a = state.read_value(a);
                 let b = state.read_value(b);
                 if a == 0u16 {
-                    state.pc = b;
+                    state.set_pc(b);
                 }
             }
             Self::Add(dest, a, b) => {
@@ -115,12 +115,12 @@ impl Instruction {
                 state.write(a, b);
             }
             Self::Call(a) => {
-                state.push(state.pc);
-                state.pc = state.read_value(a);
+                state.push(state.pc());
+                state.set_pc(state.read_value(a));
             }
             Self::Ret => match state.pop() {
                 Ok(addr) => {
-                    state.pc = addr;
+                    state.set_pc(addr);
                 }
                 Err(_) => return Ok(false),
             },

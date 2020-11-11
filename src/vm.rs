@@ -34,11 +34,10 @@ impl StdinReader {
 
 pub struct VmState {
     memory: Vec<u16>,
-    code_len: u16,
     input_buffer: StdinReader,
-    pub(crate) pc: u16,
-    pub(crate) registers: [u16; NUM_REGISTERS],
-    pub(crate) stack: Vec<u16>,
+    pc: u16,
+    registers: [u16; NUM_REGISTERS],
+    stack: Vec<u16>,
 }
 
 impl VmState {
@@ -82,6 +81,14 @@ impl VmState {
     pub fn read_char(&mut self) -> Result<u8, std::io::Error> {
         self.input_buffer.read_char()
     }
+
+    pub fn pc(&self) -> u16 {
+        self.pc
+    }
+
+    pub fn set_pc(&mut self, new_pc: u16) {
+        self.pc = new_pc;
+    }
 }
 
 pub struct Vm {
@@ -99,7 +106,6 @@ impl Vm {
                 memory,
                 input_buffer: StdinReader::new(),
                 pc: 0,
-                code_len: code.len() as u16,
                 registers: [0; 8],
                 stack: Vec::new(),
             },
@@ -119,9 +125,6 @@ impl Vm {
                 self.running = false;
             }
         };
-        if self.state.pc >= self.state.code_len {
-            self.running = false;
-        }
         Ok(())
     }
 
@@ -134,13 +137,6 @@ impl Vm {
 
     fn parse_operand(&mut self) -> Result<Operand, VmError> {
         Operand::try_from(self.state.read_u16())
-    }
-
-    fn expect_literal(&mut self) -> Result<Literal, VmError> {
-        match self.parse_operand()? {
-            Operand::Literal(l) => Ok(l),
-            op @ _ => Err(VmError::UnexpectedOperand(op)),
-        }
     }
 
     fn expect_register(&mut self) -> Result<Register, VmError> {
@@ -215,7 +211,7 @@ mod tests {
     fn test_halt() {
         let program = [0];
         let mut vm = Vm::new(&program);
-        vm.step();
+        vm.step().expect("failed to step through program");
         assert!(!vm.running);
     }
 }
