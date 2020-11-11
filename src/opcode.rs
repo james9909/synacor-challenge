@@ -4,6 +4,7 @@ use std::convert::TryFrom;
 
 pub enum Opcode {
     Halt,
+    Jmp,
     Out,
     NoOp,
 }
@@ -14,6 +15,7 @@ impl TryFrom<u16> for Opcode {
     fn try_from(value: u16) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(Self::Halt),
+            6 => Ok(Self::Jmp),
             19 => Ok(Self::Out),
             21 => Ok(Self::NoOp),
             _ => Err(VmError::InvalidOpcode(value)),

@@ -2,10 +2,13 @@ use crate::error::VmError;
 
 use std::convert::TryFrom;
 
+pub type Literal = u16;
+pub type Register = u8;
+
 #[derive(Debug, PartialEq)]
 pub enum Operand {
-    Literal(u16),
-    Register(u8),
+    Literal(Literal),
+    Register(Register),
 }
 
 impl TryFrom<u16> for Operand {

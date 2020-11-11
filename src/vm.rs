@@ -1,16 +1,16 @@
 use crate::error::VmError;
 use crate::instruction::Instruction;
 use crate::opcode::Opcode;
-use crate::operand::Operand;
+use crate::operand::{Literal, Operand};
 
 use std::convert::TryFrom;
 
 const NUM_REGISTERS: usize = 8;
 
 pub struct VmState {
-    pc: usize,
-    registers: [u16; NUM_REGISTERS],
-    stack: Vec<u16>,
+    pub(crate) pc: u16,
+    pub(crate) registers: [u16; NUM_REGISTERS],
+    pub(crate) stack: Vec<u16>,
 }
 
 pub struct Vm<'a> {
@@ -45,7 +45,7 @@ impl<'a> Vm<'a> {
                 self.running = false;
             }
         };
-        if self.state.pc >= self.code.len() {
+        if self.state.pc as usize >= self.code.len() {
             self.running = false;
         }
     }
@@ -57,7 +57,7 @@ impl<'a> Vm<'a> {
     }
 
     fn read_u8(&mut self) -> u8 {
-        let val = self.code[self.state.pc];
+        let val = self.code[self.state.pc as usize];
         self.state.pc += 1;
         val
     }
@@ -66,17 +66,22 @@ impl<'a> Vm<'a> {
         (self.read_u8() as u16) | ((self.read_u8() as u16) << 8)
     }
 
-    fn expect_literal(&mut self) -> Result<Operand, VmError> {
-        match Operand::try_from(self.read_u16())? {
-            Operand::Literal(v) => Ok(Operand::Literal(v)),
-            v => Err(VmError::UnexpectedOperand(v)),
+    fn parse_operand(&mut self) -> Result<Operand, VmError> {
+        Operand::try_from(self.read_u16())
+    }
+
+    fn expect_literal(&mut self) -> Result<Literal, VmError> {
+        match self.parse_operand()? {
+            Operand::Literal(l) => Ok(l),
+            op @ _ => Err(VmError::UnexpectedOperand(op)),
         }
     }
 
     fn read_instruction(&mut self) -> Result<Instruction, VmError> {
         let instruction = match Opcode::try_from(self.read_u16())? {
             Opcode::Halt => Instruction::Halt,
-            Opcode::Out => Instruction::Out(self.expect_literal()?),
+            Opcode::Jmp => Instruction::Jmp(self.expect_literal()?),
+            Opcode::Out => Instruction::Out(self.parse_operand()?),
             Opcode::NoOp => Instruction::NoOp,
         };
         Ok(instruction)
