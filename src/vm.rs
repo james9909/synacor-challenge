@@ -5,22 +5,30 @@ use crate::operand::Operand;
 
 use std::convert::TryFrom;
 
+const NUM_REGISTERS: usize = 8;
+
+pub struct VmState {
+    pc: usize,
+    registers: [u16; NUM_REGISTERS],
+    stack: Vec<u16>,
+}
+
 pub struct Vm<'a> {
     code: &'a [u8],
-    pc: usize,
-    registers: [u16; 8],
     running: bool,
-    stack: Vec<u16>,
+    state: VmState,
 }
 
 impl<'a> Vm<'a> {
     pub fn new(code: &'a [u8]) -> Vm<'a> {
         Vm {
             code,
-            pc: 0,
-            registers: [0; 8],
             running: true,
-            stack: Vec::new(),
+            state: VmState {
+                pc: 0,
+                registers: [0; 8],
+                stack: Vec::new(),
+            },
         }
     }
 
@@ -30,14 +38,14 @@ impl<'a> Vm<'a> {
         }
         match self.read_instruction() {
             Ok(i) => {
-                self.running = i.execute(&mut self.stack, &mut self.registers);
+                self.running = i.execute(&mut self.state);
             }
             Err(e) => {
                 println!("Failed to read instruction: {}", e);
                 self.running = false;
             }
         };
-        if self.pc >= self.code.len() {
+        if self.state.pc >= self.code.len() {
             self.running = false;
         }
     }
@@ -49,8 +57,8 @@ impl<'a> Vm<'a> {
     }
 
     fn read_u8(&mut self) -> u8 {
-        let val = self.code[self.pc];
-        self.pc += 1;
+        let val = self.code[self.state.pc];
+        self.state.pc += 1;
         val
     }
 

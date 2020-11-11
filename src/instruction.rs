@@ -1,4 +1,5 @@
 use crate::operand::Operand;
+use crate::vm::VmState;
 
 #[derive(Debug, PartialEq)]
 pub enum Instruction {
@@ -8,7 +9,7 @@ pub enum Instruction {
 }
 
 impl Instruction {
-    pub fn execute(&self, stack: &mut Vec<u16>, registers: &mut [u16; 8]) -> bool {
+    pub fn execute(&self, state: &mut VmState) -> bool {
         match self {
             Self::Halt => false,
             Self::Out(Operand::Literal(c)) => {
