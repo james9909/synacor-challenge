@@ -1,28 +1,63 @@
-use crate::operand::{Literal, Operand};
+use crate::operand::{Literal, Operand, Register};
 use crate::vm::VmState;
+
+const MODULO: Literal = 32768;
 
 #[derive(Debug, PartialEq)]
 pub enum Instruction {
     Halt,
+    Set(Register, Operand),
+    Eq(Register, Operand, Operand),
+    Jmp(Operand),
+    Jt(Operand, Operand),
+    Jf(Operand, Operand),
+    Add(Register, Operand, Operand),
     Out(Operand),
     NoOp,
-    Jmp(Literal),
 }
 
 impl Instruction {
     pub fn execute(&self, state: &mut VmState) -> bool {
         match self {
             Self::Halt => false,
-            Self::Out(value) => {
-                let chr = match value {
-                    Operand::Literal(c) => *c,
-                    Operand::Register(r) => state.registers[*r as usize],
-                } as u8;
-                print!("{}", chr as char);
+            Self::Set(dest, source) => {
+                state.set_register(*dest, state.read_value(source));
                 true
             }
-            Self::Jmp(destination) => {
-                state.pc = *destination;
+            Self::Eq(dest, a, b) => {
+                let a = state.read_value(a);
+                let b = state.read_value(b);
+                state.set_register(*dest, (a == b) as u16);
+                true
+            }
+            Self::Jmp(dest) => {
+                state.pc = state.read_value(dest);
+                true
+            }
+            Self::Jt(a, b) => {
+                let a = state.read_value(a);
+                let b = state.read_value(b);
+                if a != 0u16 {
+                    state.pc = b;
+                }
+                true
+            }
+            Self::Jf(a, b) => {
+                let a = state.read_value(a);
+                let b = state.read_value(b);
+                if a == 0u16 {
+                    state.pc = b;
+                }
+                true
+            }
+            Self::Add(dest, a, b) => {
+                let sum = state.read_value(a) + state.read_value(b) % MODULO;
+                state.set_register(*dest, sum);
+                true
+            }
+            Self::Out(op) => {
+                let chr = state.read_value(op) as u8;
+                print!("{}", chr as char);
                 true
             }
             Self::NoOp => true,

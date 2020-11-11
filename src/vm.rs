@@ -1,7 +1,7 @@
 use crate::error::VmError;
 use crate::instruction::Instruction;
 use crate::opcode::Opcode;
-use crate::operand::{Literal, Operand};
+use crate::operand::{Literal, Operand, Register};
 
 use std::convert::TryFrom;
 
@@ -11,6 +11,19 @@ pub struct VmState {
     pub(crate) pc: u16,
     pub(crate) registers: [u16; NUM_REGISTERS],
     pub(crate) stack: Vec<u16>,
+}
+
+impl VmState {
+    pub fn read_value(&self, operand: &Operand) -> Literal {
+        match operand {
+            Operand::Literal(l) => *l,
+            Operand::Register(r) => self.registers[*r as usize],
+        }
+    }
+
+    pub fn set_register(&mut self, register: Register, value: Literal) {
+        self.registers[register as usize] = value
+    }
 }
 
 pub struct Vm<'a> {
@@ -73,10 +86,30 @@ impl<'a> Vm<'a> {
         }
     }
 
+    fn expect_register(&mut self) -> Result<Register, VmError> {
+        match self.parse_operand()? {
+            Operand::Register(r) => Ok(r),
+            op @ _ => Err(VmError::UnexpectedOperand(op)),
+        }
+    }
+
     fn read_instruction(&mut self) -> Result<Instruction, VmError> {
         let instruction = match Opcode::try_from(self.read_u16())? {
             Opcode::Halt => Instruction::Halt,
-            Opcode::Jmp => Instruction::Jmp(self.expect_literal()?),
+            Opcode::Set => Instruction::Set(self.expect_register()?, self.parse_operand()?),
+            Opcode::Eq => Instruction::Eq(
+                self.expect_register()?,
+                self.parse_operand()?,
+                self.parse_operand()?,
+            ),
+            Opcode::Jmp => Instruction::Jmp(self.parse_operand()?),
+            Opcode::Jt => Instruction::Jt(self.parse_operand()?, self.parse_operand()?),
+            Opcode::Jf => Instruction::Jf(self.parse_operand()?, self.parse_operand()?),
+            Opcode::Add => Instruction::Add(
+                self.expect_register()?,
+                self.parse_operand()?,
+                self.parse_operand()?,
+            ),
             Opcode::Out => Instruction::Out(self.parse_operand()?),
             Opcode::NoOp => Instruction::NoOp,
         };
